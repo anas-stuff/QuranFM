@@ -5,26 +5,16 @@ import com.anas.alqurancloudapi.quran.edition.Edition;
 import com.anas.alqurancloudapi.quran.edition.EditionFormat;
 import com.anas.discordbots.quranfm.listeners.MessageListener;
 import com.anas.discordbots.quranfm.listeners.SlashCommandsListener;
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.anas.discordbots.quranfm.player.QuranRadio;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
-import org.javacord.api.audio.AudioSource;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
-import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandBuilder;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionType;
 
-import javax.security.auth.login.LoginException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CancellationException;
@@ -54,6 +44,8 @@ public class MainController {
     public void start(final String token) {
         init(token);
         setup();
+        LOGGER.fine("Bot is ready!");
+        LOGGER.info("Invite link: " + discordApi.createBotInvite());
     }
 
     private void setup() {
@@ -69,9 +61,8 @@ public class MainController {
         discordApi.bulkOverwriteGlobalApplicationCommands(Arrays.asList(
                 new SlashCommandBuilder().setName("join").setDescription("Join the voice channel")
                         .setOptions(Collections.singletonList(
-                                SlashCommandOption.create(SlashCommandOptionType.STRING, "edition",
-                                        "The edition of quran to join (default: " +
-                                                availableEditions[0].getName() + ")", false))),
+                                SlashCommandOption.create(SlashCommandOptionType.STRING, "editions",
+                                        "The edition of quran to join (default: all)", false))),
                 new SlashCommandBuilder().setName("leave").setDescription("Leave the voice channel"),
                 new SlashCommandBuilder().setName("surah").setDescription("Get the current surah name"),
                 new SlashCommandBuilder().setName("ayah").setDescription("Get the current ayah"),
@@ -95,17 +86,37 @@ public class MainController {
         }
     }
 
-    public DiscordApi getDiscordApi() {
-        return discordApi;
-    }
-
-    public void joinVoiceChannel(final ServerVoiceChannel serverVoiceChannel) {
+    public void joinVoiceChannel(final ServerVoiceChannel serverVoiceChannel, final String[] editions) {
         serverVoiceChannel.connect().thenAccept(audioConnection -> {
             LOGGER.info("Connected to voice channel!");
-
+            new Thread(new QuranRadio(audioConnection, getEdititons(editions))).start();
         }).exceptionally(throwable -> {
             LOGGER.severe("Failed to connect to voice channel: " + throwable.getMessage());
             return null;
         });
+    }
+
+    private Edition[] getEdititons(final String[] editions) {
+        if (editions == null || editions.length == 0) {
+            return availableEditions;
+        }
+        final var selectedEditions = new ArrayList<Edition>();
+        for (final String s : editions) {
+            for (final Edition edition : availableEditions) {
+                if (edition.getName().equals(s) || edition.getIdentifier().equals(s)) {
+                    selectedEditions.add(edition);
+                    break;
+                }
+            }
+        }
+        return selectedEditions.toArray(new Edition[0]);
+    }
+
+    public DiscordApi getDiscordApi() {
+        return discordApi;
+    }
+
+    public Edition[] getAvailableEditions() {
+        return availableEditions;
     }
 }
