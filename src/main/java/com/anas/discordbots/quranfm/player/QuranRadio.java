@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
 import org.javacord.api.audio.AudioConnection;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 
@@ -26,6 +27,8 @@ public class QuranRadio implements Runnable {
     private final Edition[] editions;
     private Surah currentSurah;
     private Ayah currentAyah;
+    private final Thread thread;
+    private final AtomicBoolean running;
 
     static {
         LOGGER = Logger.getLogger(QuranRadio.class.getName());
@@ -35,6 +38,8 @@ public class QuranRadio implements Runnable {
         this.editions = editions;
         currentSurah = null;
         currentAyah = null;
+        running = new AtomicBoolean(false);
+        thread = new Thread(this);
         setup(audioConnection);
     }
 
@@ -43,7 +48,11 @@ public class QuranRadio implements Runnable {
         playerManager.registerSourceManager(new HttpAudioSourceManager());
         this.audioPlayer = playerManager.createPlayer();
         audioConnection.setAudioSource(new LavaplayerAudioSource(MainController.getInstance().getDiscordApi(), audioPlayer));
-        audioPlayer.addListener(new AudioPlayerListener());
+        audioPlayer.addListener(event -> {
+            if (event.player.getPlayingTrack() == null && running.get()) {
+                run();
+            }
+        });
     }
 
     @Override
@@ -66,16 +75,22 @@ public class QuranRadio implements Runnable {
             currentAyah = currentSurah.getAyahs()[currentAyah.getNumberInSurah()];
         }
         playerManager.loadItem(currentAyah.getAudioUrl(), new ResultHandler(audioPlayer));
-        LOGGER.info("Loading surah " + currentSurah.getName() + " ayah " + currentAyah.getNumberInSurah());
     }
 
-    private class AudioPlayerListener implements AudioEventListener {
-        @Override
-        public void onEvent(AudioEvent event) {
-            System.out.println("Is paused: " + event.player.isPaused());
-            if (event.player.getPlayingTrack() == null) {
-                run();
-            }
-        }
+    public void stop() {
+        running.set(false);
+    }
+
+    public void start() {
+        running.set(true);
+        thread.start();
+    }
+
+    public Surah getCurrentSurah() {
+        return currentSurah;
+    }
+
+    public Ayah getCurrentAyah() {
+        return currentAyah;
     }
 }

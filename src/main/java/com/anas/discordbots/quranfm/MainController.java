@@ -14,9 +14,7 @@ import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionType;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.logging.Logger;
@@ -24,6 +22,7 @@ import java.util.logging.Logger;
 public class MainController {
     private Edition[] availableEditions;
     private DiscordApi discordApi;
+    private Map<ServerVoiceChannel, QuranRadio> quranRadioMap;
     private static final Logger LOGGER;
     private static MainController instance;
 
@@ -76,6 +75,7 @@ public class MainController {
 
     private void init(final String token) {
         LOGGER.info("Initializing...");
+        quranRadioMap = new HashMap<>();
         try {
             availableEditions = QuranAPI.getEditions(EditionFormat.AUDIO);
             discordApi = new DiscordApiBuilder().setToken(token)
@@ -87,13 +87,29 @@ public class MainController {
     }
 
     public void joinVoiceChannel(final ServerVoiceChannel serverVoiceChannel, final String[] editions) {
+        if (quranRadioMap.containsKey(serverVoiceChannel)) {
+            LOGGER.info("Already in voice channel " + serverVoiceChannel.getName());
+            throw new IllegalStateException("Already in voice channel " + serverVoiceChannel.getName());
+        }
         serverVoiceChannel.connect().thenAccept(audioConnection -> {
             LOGGER.info("Connected to voice channel!");
-            new Thread(new QuranRadio(audioConnection, getEdititons(editions))).start();
+            quranRadioMap.put(serverVoiceChannel, new QuranRadio(audioConnection,
+                    getEdititons(editions)));
+            // Start the thread
+            quranRadioMap.get(serverVoiceChannel).start();
         }).exceptionally(throwable -> {
             LOGGER.severe("Failed to connect to voice channel: " + throwable.getMessage());
             return null;
         });
+    }
+
+    public void leaveVoiceChannel(ServerVoiceChannel serverVoiceChannel) {
+        if (quranRadioMap.containsKey(serverVoiceChannel)) {
+            quranRadioMap.get(serverVoiceChannel).stop();
+            serverVoiceChannel.disconnect();
+            quranRadioMap.remove(serverVoiceChannel);
+            LOGGER.info("Left voice channel! " + serverVoiceChannel.getName());
+        }
     }
 
     private Edition[] getEdititons(final String[] editions) {
@@ -119,4 +135,9 @@ public class MainController {
     public Edition[] getAvailableEditions() {
         return availableEditions;
     }
+
+    public QuranRadio getQuranRadio(final ServerVoiceChannel serverVoiceChannel) {
+        return quranRadioMap.get(serverVoiceChannel);
+    }
+
 }
