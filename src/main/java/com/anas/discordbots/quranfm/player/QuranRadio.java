@@ -53,6 +53,7 @@ public class QuranRadio implements Runnable {
             try {
                 currentSurah = QuranAPI.getSurah(Surahs.values()[(int) (Math.random() * Surahs.values().length)],
                         editions[(int) (Math.random() * editions.length)]);
+                currentAyah = null;
                 LOGGER.info("Changed surah to " + currentSurah.getName());
             } catch (IOException e) {
                 LOGGER.severe("Error while getting surah: " + e.getMessage());
@@ -62,7 +63,7 @@ public class QuranRadio implements Runnable {
         if (currentAyah == null) {
             currentAyah = currentSurah.getAyahs()[0];
         } else {
-            currentAyah = currentSurah.getAyahs()[currentAyah.getNumberInSurah() + 1];
+            currentAyah = currentSurah.getAyahs()[currentAyah.getNumberInSurah()];
         }
         playerManager.loadItem(currentAyah.getAudioUrl(), new ResultHandler(audioPlayer));
         LOGGER.info("Loading surah " + currentSurah.getName() + " ayah " + currentAyah.getNumberInSurah());
@@ -72,8 +73,7 @@ public class QuranRadio implements Runnable {
         @Override
         public void onEvent(AudioEvent event) {
             System.out.println("Is paused: " + event.player.isPaused());
-            var t = event.player.getPlayingTrack().getIdentifier();
-            if (event.player.getPlayingTrack().getIdentifier().isBlank()) {
+            if (event.player.getPlayingTrack() == null) {
                 run();
             }
         }
