@@ -1,3 +1,14 @@
 Manifest-Version: 1.0
 Main-Class: com.anas.discordbots.quranfm.Main
+Class-Path: javacord-core-3.5.0.jar logging-interceptor-4.9.3.jar alqura
+ n-cloud-api-0.2.1-v1.jar okio-2.8.0.jar xsalsa20poly1305-0.11.0.jar kot
+ lin-stdlib-1.4.10.jar jackson-core-2.13.3.jar kotlin-stdlib-jdk8-1.4.10
+ .jar kotlin-stdlib-common-1.4.0.jar javacord-api-3.5.0.jar annotations-
+ 13.0.jar lava-common-1.1.2.jar vavr-match-0.10.4.jar lavaplayer-1.3.78.
+ jar log4j-api-2.17.2.jar httpclient-4.5.10.jar commons-codec-1.11.jar c
+ ommons-io-2.6.jar jsoup-1.12.1.jar jackson-databind-2.13.3.jar jackson-
+ annotations-2.13.3.jar okhttp-4.9.3.jar bcprov-jdk15on-1.60.jar slf4j-a
+ pi-1.7.25.jar base64-2.3.9.jar kotlin-stdlib-jdk7-1.4.10.jar httpcore-4
+ .4.12.jar lavaplayer-natives-1.3.14.jar vavr-0.10.4.jar nv-websocket-cl
+ ient-2.14.jar commons-logging-1.2.jar
 

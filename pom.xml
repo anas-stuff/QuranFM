@@ -23,9 +23,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.javacord</groupId>
-			<artifactId>javacord</artifactId>
+			<artifactId>javacord-core</artifactId>
 			<version>3.5.0</version>
-			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>com.github.anas-elgarhy</groupId>
@@ -42,7 +41,51 @@
 			<artifactId>jackson-core</artifactId>
 			<version>2.13.3</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.13.3</version>
+		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>unpack-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<excludeScope>system</excludeScope>
+							<excludes>META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA</excludes>
+							<excludeGroupIds>junit,org.mockito,org.hamcrest</excludeGroupIds>
+							<outputDirectory>${project.build.directory}/classes</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- Build an executable JAR -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>com.anas.discordbots.quranfm.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
