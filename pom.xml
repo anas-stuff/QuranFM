@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>com.github.anas-elgarhy</groupId>
 			<artifactId>alquran-cloud-api</artifactId>
-			<version>0.2.1-v1</version>
+			<version>v0.4.2-v1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sedmelluq</groupId>
